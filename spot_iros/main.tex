@@ -376,8 +376,22 @@ As a result, we define a risk measure that takes perceptual capabilities and unc
 Efficient methods for computing predicted risk uncertainty over a 2-D grid for a given sensor model have been considered in \todo{CITE}.
 
 \ph{Specific example Necessity of perception aware planing in Spot}
-Although a key feature of NeBula is in planning perception-aware paths, in the case of integration of NeBula with Spot, we found that a simple heuristic sufficed to approximate the optimal solution $\pi^*$.  This heuristic was to solve for deterministic A* paths (Equation \ref{deterministic_plan}) and then to give a desired location and orientation to Spot as a waypoint along this path.  The orientation was simply the relative heading between the current robot position and the waypoint itself.  This results in a behavior where the robot orients itself forward as it walks whenever possible.  We found this heuristic to be sufficient in practice since Spot is a holonomic robot and can orient itself in any direction as it moves.  Figure \ref{global_cost_map} shows an example costmap and the A* path leading to the goal, given by the global planner.  Future work will involve bringing the more advanced uncertainty-aware planning from the NeBula framework into Spot. 
+Although a key feature of NeBula is in planning perception-aware paths, in the case of integration of NeBula with Spot, we found that a simple heuristic sufficed to approximate the optimal solution $\pi^*$.  This heuristic was to solve for deterministic A* paths (Equation \ref{deterministic_plan}) and then to give a desired location and orientation to Spot as a waypoint along this path.  The orientation was simply the relative heading between the current robot position and the waypoint itself.  This results in a behavior where the robot orients itself forward as it walks whenever possible.  We found this heuristic to be sufficient in practice since Spot is a holonomic robot and can orient itself in any direction as it moves.  Furthermore, the sensor coverage from Spot's internal cameras is Figure \ref{bd_costmap} shows an example costmap Future work will involve bringing the more advanced uncertainty-aware planning from the NeBula framework into Spot. 
 
+\begin{figure}[thpb]
+   \centering
+    \begin{subfigure}{0.5\linewidth}
+        \centering
+        \includegraphics[trim={4cm 3cm 4cm 3.5cm},clip, width=\linewidth]{spot_iros/graphics/costmap_bd2.png}
+    \end{subfigure}%
+    ~
+    \begin{subfigure}{0.5\linewidth}
+        \centering
+        \includegraphics[trim={1cm 1cm 1cm 1cm},clip, width=\linewidth]{spot_iros/graphics/costmap_bd2_embedded.png}
+    \end{subfigure}
+    \label{bd_costmap}
+    \caption{Left:  Risk map generated from BD onboard cameras, pink lethal, red high-risk but non lethal, and blue low risk.  Right:  BD risk map layer combined with LiDAR based risk map showing larger range of obstacles.}
+\end{figure}
 
 % \begin{itemize} % For Mission Autonomy(Behavstmap) -> iours, IRM) probably we just gonna cite Scott and Kyon aero paper. 
 %         \item Traversability (settling, collision check, slope check, negative obstacles,..) (David?)
