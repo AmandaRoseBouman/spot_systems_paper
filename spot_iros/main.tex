@@ -117,7 +117,7 @@ We demonstrate the performance of the proposed solutions on physical systems in 
 \section{Introduction}\label{sec:intro}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \rev{Robotic and autonomous mapping and traversal of extreme environments under time constraints has a wide variety of real-world applications. 
-They range from search and rescue after natural disasters \cite{Nagatani2013} over exploration of extreme planetary terrains \rev{\cite{ali-agu}, \cite{Taka2020JFR}, \cite{Husain2013}}to inspection of underground infrastructure in urban environments~\cite{Kolvenbach2020}.
+They range from search and rescue after natural disasters \cite{Nagatani2013} to exploration of extreme planetary terrains \rev{\cite{ali-agu}, \cite{Taka2020JFR}, \cite{Husain2013}}to inspection of underground infrastructure in urban environments~\cite{Kolvenbach2020}.
 %\rev{This paper discusses Team CoSTAR's synergistic approach of combining advanced quadrupedal locomotion and high-level autonomy in order to accomplish complex missions.}
 %In this paper, we discuss how bridging advanced locomotion capabilities and autonomy can address such complex missions. 
 %In this paper, we discuss how bridging advanced locomotion capabilities and autonomy can address such complex missions.
@@ -179,7 +179,7 @@ The researchers augmented an experimental hexapod platform with commercial visio
 %Recently, Miller et al. \cite{Miller2019} proposed the first work that goes towards full autonomy with quadrupeds in GPS-denied environments. Their Ghost Vision 60 was equipped with a high level of autonomy to explore tunnel-like environments during the DARPA Subterranean Challenge, Tunnel Circuit.
 %Impressive results have been shown in  Miller et al. \cite{Miller2019}, who paved the way towards fully autonomous exploration of unknown, GPS-denied, subterranean environments with legged robots. The authors adopted a Ghost Vision 60 with a high-level of autonomy to explore tunnel-like environments during the 2019 DARPA Subterranean Challenge, Tunnel circuit.
 
-Miller et al.~\cite{Miller2019}, 
+Miller et al.~\cite{miller2019tunnel}, 
 %have demonstrated impressive results with their legged platform. They 
 endowed a Ghost Vision 60 quadruped with higher levels of autonomy to explore a tunnel environment during the 2019 DARPA Subterranean Challenge, Tunnel Circuit. To our knowledge, they were one of the first researchers to demonstrate  
 %paved the way towards 
@@ -406,55 +406,47 @@ for sensing, autonomy and \rev{semantic scene}understanding.
 
 
 
-\vspace{20}
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{NeBula Odometry on Legged Systems}\label{sec:state_estimation}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+To enable autonomous robotic operation in extreme environments, a reliable odometry source is a prerequisite. In such scenarios, darkness, presence of obscurants (e.g. dust, fog, smoke), self-similar areas, along with strong platform vibration originated by mobility-stressing terrains, are common features that pose severe challenges to robotic perception, making odometry estimation a crucial problem under perceptually-degraded conditions.
+
+%\ph {Odometry Challenges} 
+Uneven and slippery areas make inertial sensing inaccurate while the material composition of the surface where the legged robot is walking on (e.g soft moquette, hard concrete) has strong impacts on the accuracy of kinematic-based odometry (KO). Darkness, or sudden excessive change in illumination, along with dust and the occasional presence of fog and gas, pose significant challenges to cameras, and potential visual aliasing phenomena in texture-less or texture-repetitive environments make feature-tracking problematic, decreasing the overall reliability of vision-based odometry (VO). Self-similar environments with repetitive geometry and lack of distinctive landmarks, make scan-matching based methods ambiguous and prone to drift: moreover, active stereo cameras (including the in-built factory ones on the Spot platform) have a limited field of view, which renders them insufficient for our long-range perception applications.
 
 
-
-\rev{To enable autonomous robotic operation in extreme environments, a reliable odometry source is a prerequisite. In such scenarios, darkness, presence of obscurants (e.g. dust, fog, smoke), self-similar areas, along with strong platform vibration originated by mobility-stressing terrains, are common features that pose severe threats to robotic perception, making odometry estimation a challenging problem under perceptually-degraded conditions.}
-
-
-
-\ph {Odometry Challenges} 
-Uneven and slippery areas make inertial sensing inaccurate while the material composition of the surface where the legged robot is walking on (e.g soft moquette, hard concrete) has strong impacts on the accuracy of kinematic-based odometry (KO). Darkness, or sudden excessive change in illumination, along with dust and the occasional presence of fog and gas, pose significant challenges to cameras, and potential visual aliasing phenomena in texture-less or texture-repetitive environments make feature-tracking problematic, decreasing the overall reliability of vision-based odometry (VO). Self-similar environments with repetitive geometry and lack of distinctive landmarks, make scan-matching based methods ambiguous and prone to drift: moreover, active stereo cameras (including the in-built factory ones on the Spot platform) have a limited field of view and their high noise in long-range sensing render them inaccurate for this purpose.
-
-
-
-\rev{\ph{Solution Architecture} To overcome these challenges, NeBula relies on a LiDAR-centric uncertainty-aware multi-sensor fusion framework where a \emph{selected} odometry source is fused with LiDAR information to enable accurate ego-motion estimation under challenging perceptual conditions. The main components of the proposed approach are as follows: \texit{(i)} an anomaly-aware odometry multiplexer (HeRO), \texit{(ii)} a multi-sensor LiDAR-centric SLAM front-end (LOCUS) and \texit{(ii)} a SLAM back-end (LAMP). We report in Fig.\ref{architecture} a high-level overview of the proposed approach, and discuss each sub-component in the following.} 
-
-
+\ph{Solution Architecture} To overcome these challenges, NeBula relies on a LiDAR-centric uncertainty-aware multi-sensor fusion framework where a \emph{selected} odometry source is fused as a prior with LiDAR information to enable accurate ego-motion estimation under challenging perceptual conditions. The main components of the proposed approach are: \texit{(i)} an anomaly-aware odometry multiplexer (HeRO), \texit{(ii)} a multi-sensor LiDAR-centric SLAM front-end (LOCUS) and \texit{(iii)} a SLAM back-end (LAMP). Fig.\ref{architecture} provides a high-level overview of the proposed approach. We discuss each component in the following.
 
 \begin{figure}[thpb]
   \centering
-  \includegraphics[width=0.49\textwidth]{spot_iros/graphics/architecture.pdf}
-  \caption{\rev{Solution Architecture of the NeBula Multi-sensor Fusion Framework}}
+  \includegraphics[width=0.48\textwidth]{spot_iros/graphics/architecture.pdf}
+  \caption{\rev{Solution Architecture of the NeBula Multi-Sensor Fusion Framework}}
   \label{architecture}
 \end{figure}
 
 
 
-\rev{\ph{Odometry Multiplexer} To select the best odometry source to be fused with LiDAR information, we feed multiple and heterogeneous sources of odometry available onboard (e.g. KO, VO, etc...) into an anomaly-aware odometry multiplexer, referred to as HeRO~\cite{Santamaria-navarro2019}. At every time step, HeRO runs a confidence test on each odometry source to detect potential anomalies in the estimation stream (e.g. gaps, jumps, divergences) and identify the most reliable input from a predefined ranking following a resilient paradigm: if an anomaly is detected in the highest-ranking source, then the next source in the ranking that passed the confidence check is selected. %Being $\mathcal{R}$ the coordinate system of the robot and $\mathcal{W}$ the coordinate system of the world, 
-In the following we indicate the pose estimate of HeRO's output with $\textbf{Y} \in SE(3)$.
-}
+\ph{Odometry Multiplexer} To select the best odometry prior to be fused with LiDAR information, we feed multiple and heterogeneous sources of odometry available onboard (e.g., KO, VO, etc...) into an anomaly-aware odometry multiplexer, referred to as HeRO~\cite{Santamaria-navarro2019}. At every time step, HeRO runs a confidence test on each odometry prior to detect potential anomalies %in the estimation stream 
+(e.g., gaps, jumps, divergences) and identify~\cite{Santamaria-navarro2019} the most reliable input $\textbf{Y} \in SE(3)$ to be used as a prior in the lidar-based front-end.
+% input from a predefined ranking following a resilient paradigm: if an anomaly is detected in the highest-ranking source, then the next source in the ranking that passed the confidence check is selected. %Being $\mathcal{R}$ the coordinate system of the robot and $\mathcal{W}$ the coordinate system of the world, 
+% In the following we indicate the pose estimate of HeRO's output with $\textbf{Y} \in SE(3)$.
 
 
 
-\rev{\ph{Localization Front-End} The output of the odometry multiplexer is fed into a multi-sensor LiDAR-centric SLAM front-end module, referred to as LOCUS~\cite{Palieri2020} that performs a cascaded GICP-based scan-to-scan and scan-to-submap matching operation to estimate the relative motion of the robot between consecutive LiDAR acquisitions. We denote with $L_{k}$ the lidar scan collected at time $k$ and with $L_{k-1}$ the lidar scan collected at time $k-1$. We indicate with $\textbf{E}^{k-1}_{k} = \textbf{Y}^{-1}_{k-1}\textbf{Y}_k\in SE(3)$ the rigid body transformation of HeRO's output between two consecutive LiDAR acquisitions. %(in order to address asynchronous odometry measurements, we interpolate the buffered $\textbf{Y}$ at LiDAR timestamps to $t_{k-1}$, and $t_k$ to get $\textbf{Y}_{k-1}$ and $\textbf{Y}_{k}$: the pose of HeRO's output at times $t_{k-1}$ and $t_k$, respectively). 
+\ph{Localization Front-End} The output of the odometry multiplexer is fed into a multi-sensor LiDAR-centric SLAM front-end module, referred to as LOCUS~\cite{Palieri2020} that performs a cascaded GICP-based scan-to-scan and scan-to-submap matching operation to estimate the relative motion of the robot between consecutive LiDAR acquisitions. Let $L_{k}$ denote the lidar scan acquired the $k$-th time step. We indicate with $\textbf{E}^{k-1}_{k} = \textbf{Y}^{-1}_{k-1}\textbf{Y}_k\in SE(3)$ the rigid body transformation of HeRO's output between two consecutive LiDAR acquisitions. %(in order to address asynchronous odometry measurements, we interpolate the buffered $\textbf{Y}$ at LiDAR timestamps to $t_{k-1}$, and $t_k$ to get $\textbf{Y}_{k-1}$ and $\textbf{Y}_{k}$: the pose of HeRO's output at times $t_{k-1}$ and $t_k$, respectively). 
 
 In the scan-to-scan matching stage, GICP computes the optimal transformation $\hat{\textbf{T}}^{k-1}_{k}$ that minimizes the residual error $\mathcal{E}$ between corresponding points in $L_{k-1}$ and $L_{k}$. 
 \begin{align}\label{eq:GICP_ss}
 \hat{\textbf{T}}^{k-1}_{k} = \arg\min_{\textbf{T}^{k-1}_{k}} \mathcal{E} (\textbf{T}^{k-1}_{k}L_{k}, L_{k-1})
 \end{align}
-To enhance accuracy and reduce computation we initialize GICP with $\textbf{T}^{k-1}_{k} = \textbf{E}^{k-1}_{k}$. In the case where no input is received by HeRO, GICP is initialized with the identity pose and the system reverts to pure lidar odometry. 
+To enhance accuracy we initialize the optimization with $\textbf{E}^{k-1}_{k}$. In the case where no input is received by HeRO, we rely on the identity transformation as the prior and the system reverts to pure lidar odometry. 
 
-To enable global consistency across the history of scans, the motion estimated in the scan-to-scan matching stage is further refined by a scan-to-submap matching step. Here $L_k$ is matched against a local submap $S_k$ which is taken from the local region of the global map $M_k$ given the current estimate of the robot pose in the world frame (the global map is an accumulation of point clouds after every $t$~meters of translation, or $r$~degrees of rotation and is stored in an octree format: in our results, we use $t = 1$, $r = 30^o$).
+\rev{To enable global consistency across the history of scans, the motion estimated in the scan-to-scan matching stage is further refined by a scan-to-submap matching step. Here $L_k$ is matched against a local submap $S_k$ which is taken from the local region of the global map $M_k$ given the current estimate of the robot pose in the world frame (the global map is an accumulation of point clouds after every $t$~meters of translation, or $r$~degrees of rotation). %and is stored in an octree format: in our results, we use $t = 1$, $r = 30^o$).
 \begin{align}\label{eq:GICP_map}
 \tilde{\textbf{T}}^{k-1}_{k} = \arg\min_{\textbf{T}^{k-1}_{k}} \mathcal{E} (\textbf{T}^{k-1}_{k}L_{k}, S_{k})
 \end{align}
-In this optimization, $\textbf{T}^{k-1}_{k}$ is initialized with the $\hat{\textbf{T}}^{k-1}_{k}$ result from Eqn.~\ref{eq:GICP_ss}. 
+In this optimization, $\textbf{T}^{k-1}_{k}$ is initialized with the $\hat{\textbf{T}}^{k-1}_{k}$ result from (\ref{eq:GICP_ss}). 
+% This optimization is initialized with the $\hat{\textbf{T}}^{k-1}_{k}$ result from (\ref{eq:GICP_ss}). 
 
 After scan-to-scan and scan-to-submap matching, the final estimated motion $\tilde{\textbf{T}}^{k-1}_{k}$ between consecutive LiDAR acquisitions is used to update the robot pose in the world: the generated odometry is therefore the integration of all computed incremental transforms. 
 % Both accuracy and computational speed are improved by the cascaded optimization approach: a good initial estimate in both (3) and (4) reduces the chances of converging in a sub-optimal local minima, and reduces the number of iterations needed to converge, lowering computation time.
@@ -471,10 +463,7 @@ After scan-to-scan and scan-to-submap matching, the final estimated motion $\til
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Local Planning}\label{sec:local_planning}
-%This section describes our approach to build a bigger environment map and it's use for local planning.
-
-Assessing the traversability risk is a prerequisite for autonomous navigation in extreme environments.
-
+This section describes our approach to enable Spot to traverse \rev{extreme environments}, where assessing the traversability risk and planning safe paths is a prerequisite for autonomous navigation.
 %\rev{In order to accomplish the overall mission, we develop the local planner is to choose actions that minimize the failure risk to the robot.}
 
 %\rev{In order to \rev{accomplish}the overall mission, the robot must negotiate its local surroundings and safely navigate to local waypoints. %6
@@ -483,30 +472,46 @@ Assessing the traversability risk is a prerequisite for autonomous navigation in
 
 %To this end, we adopt a risk-aware local planning approach, where we analyze the traversal risk of the local surrounding and plan minimum-risk paths to a given waypoint.
 
+%In our \rev{mission of interest,}traversability challenges include 
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Traversability Map}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% We discretize the belief of the map $M$ into $N_M$ grid cells, by constructing a discretized random field in multi-dimensional space, where each independent cell stores a probabilistic estimate of the map.  For example, the cell can capture belief about occupancy, risk of traversal, or the likelihood it contains an artifact or object of interest.  Occupancy grid maps have been well studied for some time \cite{moravec1985high,elfes1990stochastic}.
+% %
+% Formally, an we define the grid map as composed of grid cells:
+% \begin{align}
+%   M = (\mathbf{m}^1, \mathbf{m}^2, \dots, \mathbf{m}^{N_M}),
+% \end{align}
+% where $\mathbf{m}^i$ is a random variable for the state of the $i$-th cell,
+% i.e., $\mathbf{m}^i \in \mathbb{M}$, and
+% $N_M$ is the total number of grid cells in the map.
+% In the case of an occupancy grid map, $\mathbf{m}^i$ is a Bernoulli random variable with $\mathbb{M} = \{free, occupied\}$.  More generally, $\mathbb{M}$ can be the cross space of multiple boolean and real variables which represent different attributes.  For example, $\mathbb{M} = \{free, occupied\}\times\{artifact, no\, artifact\}\times [0,1] (risk)$.
+% The value of $\mathbf{m}^i$ is often assumed to be static over time.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Consider a traditional mapping formulation for coverage. The belief state in this case is $b = p(M, x)$ where $M$ is the map state and $x$ is the robot state. We model $M$ as an occupancy map composed of grid cells  $m = \{\textbf{m}_i\}$ where $\mathbf{m}_i$ is a random variable representing some state (i.e. occupancy, coverage) of the $i$-th cell. In order to compute the posterior probability $p(M | z_{1:t}, x_{1:t})$ of the whole map $M$, given the robot's measurements $z_{1:t}$ and trajectory $x_{1:t}$, the cell states are traditionally approximated as binary with full independence between them \cite{TBF05,elfes1990stochastic}. %6
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% We model the traversability map $g=(m^1,\cdots,m^n)$ as a grid of cells $m = \{\textbf{m}^i\}$ where $\textbf{m^i}$ is a random variable representing the traversability state of the $i$-th cell. 
+% X = {fail, safe}, X ~ Ber(m)
+% We discretize the risk belief of the map $M$ into $N_M$ grid cells, by constructing a discretized random field in multi-dimensional space, where each independent cell stores a probabilistic estimate of the map. For example, the cell can capture belief about occupancy, risk of traversal, or the likelihood it contains an artifact or object of interest. 
+% In order to balance efficient traversal and low risk to the platform, we construct a measure of accumulative risk for a given path through the environment.
+We model the traversability of the environment as a \rev{planar} map $g=(m^1,\cdots,m^n)$ of grid of cells where $m^i$ is a Bernoulli random variable, with $m^i \in \{safe,failure\}$ representing that the robot can safely navigate through the $i$-th cell. 
+We estimate the traversability posterior over the map $p(g)$ and store it as a traversability map.
+The steps involved in computing $p(g)$ are detailed in this subsection.
 
-\rev{The traversability challenges in our mission of interest include}
+% Let $g=(m^1,\cdots,m^n)$ be a \rev{robot-centric}grid of $n=n_l\times n_w$ cells with length $n_l$ and width $n_w$, and let each $m^i\in[0,1]$ represent the probability that the robot safely traverses through cell $i$. 
 
-%In our \rev{mission of interest,}traversability challenges include 
-high slopes, obstacles, holes, deployed communication nodes, other robots, and sensor blind spots.  
-
-In order to find a balance between efficient traversal and low risk to the platform, we construct a measure of accumulative risk for a given path through the environment.  
-Let $g=(m^1,\cdots,m^n)$ be a \rev{robot-centric}grid of $n=n_l\times n_w$ cells with length $n_l$ and width $n_w$, and let each $m^i\in[0,1]$ represent the probability that the robot safely traverses through cell $i$. 
-Let $\pi=\{i_t\}_{t=0}^T$ denote a path defined as a sequence of connected cells $i^t \in g$. \rev{The set of all paths that connect the current robot pose with the goal is denoted by $\Pi$.}
-%Let $\Pi$ denote a set of paths that connect the current robot pose with the goal. 
-%\rev{Furthermore, we define \emph{risk} as the complement of traversability $r^i = 1 - m^i$.}
-
-\ph{Path Risk}
-We define the total accumulated risk of the path $\pi\in\Pi$ as 
-\begin{align}
- \mathcal{R}^{\pi}=1-\prod_{t=0}^Tm^{i_t}
-\end{align}
-which is the probability that the robot fails to safely traverse the path $\pi$.  
+%Let $\pi=\{i^t\}_{t=0}^T$ denote a path defined as a sequence of connected cells $i^t \in g$. \rev{The set of all paths that connect the current robot pose with the goal is denoted by $\Pi$.}
+%\ph{Path Risk}We define the total accumulated risk of the path $\pi\in\Pi$ as 
+%\begin{align}
+% \mathcal{R}^{\pi}=1-\prod_{t=0}^Tm^{i_t}
+%\end{align}
+%which is the probability that the robot fails to safely traverse the path $\pi$.  
 
 \ph{Risk Sources}
-There is a variety of risk sources which can increase the probability of failure during traversal.
-The most impactful sources, which are therefore considered in our analysis, include a) positive obstacles, b) negative obstacles, c) slopes, d) steps, e) mission items (other robots, deployed communication nodes), and f) sensor blind spots.
+There is a variety of risk sources which increase the probability of failure during traversal. 
+The most impactful sources, which are therefore considered in our analysis, include a) positive obstacles, b) negative obstacles, c) slopes, d) steps, and e) \rev{mission items}(other robots, deployed communication nodes).
+%, and f) sensor blind spots.
 
 % We combine multiple layers of grids that encode different types of risk. Assuming mutual exclusivity between each risk type, the total risk in each grid cell is simply the product of the individual risks of each layer.  We consider the following sources of risk:
 % \begin{itemize}
@@ -517,7 +522,7 @@ The most impactful sources, which are therefore considered in our analysis, incl
 %     \item Mission Items (comm nodes, other robots, etc.)
 % \end{itemize}
 
-\rev{\ph{Multi-Range Terrain Map}}
+\ph{Multi-Fidelity Terrain Map}
 % To identify these sources of risk, we perform traversability analysis on a local, robot-centric terrain map.
 % In order to trade-off \emph{range}, \emph{coverage} and \emph{accuracy}, we construct a multi-range/multi-fidelity terrain map.
 % \ph{Short range}
@@ -532,13 +537,11 @@ The most impactful sources, which are therefore considered in our analysis, incl
 % Each risk source a.) - f.) is stored in its own risk submap $\{g_{a},...g_f\}$. 
 % The maps are resolved at 2cm/cell for the medium range and 5cm/cell for the long-range.
 % Deployed nodes are hazards with known locations. Blind spots correspond to chunks of unknown space in the short-range terrain map.
-For detecting the aforementioned risk sources, we must build a terrain map of the robot's surrounding.
-%As we are operating in unknown environments, we do not have access to prior maps.
-
-\rev{Given that the environment is completely unknown prior to exploration, we do not have any maps, and thus}we employ the heterogeneous NeBula Sensor Package (NSP) for modeling the terrain up to 10m away from the robot.
-Specifically, depth cameras are used for short range sensing ($\leq$1m), instantaneous LIDAR point clouds for medium range sensing ($\leq$3m), and spatially fused point clouds \cite{oleynikova2017voxblox} for long range detection ($\leq$10m).
-
-\rev{The combination of these various sensing capacities yields an optimal}trade-off between \emph{range}, \emph{density} and \emph{accuracy} in the resulting terrain map.
+For detecting the aforementioned risk sources in unknown environments, we build a local terrain map of the robot's surrounding, via data collected from NSP. % for modeling the terrain up to 10m away from the robot.
+Specifically, we build a multi-fidelity map at various ranges. We use depth cameras for short range sensing, %($\leq$1m), 
+instantaneous LIDAR point clouds for medium range sensing, %($\leq$3m), 
+and spatially fused point clouds \cite{oleynikova2017voxblox} for long range detection. % ($\leq$10m). 
+The combination of these various sensing capacities yields an efficient trade-off among \emph{range}, \emph{density} and \emph{accuracy} in the resulting terrain map.
 
 \rev{\ph{Traversability Analysis}}
 %Different sources of risk have to be detected by different methods. In addition to that, the heterogeneity of the terrain map requires us to use different methods for the \emph{same} risk type.
@@ -551,59 +554,76 @@ In the medium range map, gaps were identified as negative obstacles.
 The remaining two risk sources, deployed communication nodes and other robots, did not need a special analysis as their locations are already known.
 
 
-\rev{\ph{Multi-Layer/Multi-Range Traversability Map}}
+\rev{\ph{Multi-Layer/Multi-Fidelity Traversability Map}}
 To best capture the heterogeneity across risk sources and range, we represent the traversability map in the layered architecture shown in Fig. \ref{fig:layered_costmap}.
-The traversability map $g$ implicitly consists of $N$ different layers $\{g_1,...,g_N\}$. The vertical dimension separates the traversability map by risk source and the horizontal dimension separates it by the sensor used
+The traversability map $g$ implicitly consists of $N$ different layers \rev{$\{{}_{1}g,...,{}_{N}g\}$, where each layer ${}_{\ell}g$ represents a different risk source.}The vertical dimension separates the traversability map by risk source and the horizontal dimension separates it by the fidelity level.
 %hence the range.
-This architecture is henceforth referred to as the \emph{risk-range volume}; inspired by the  
+This architecture is henceforth referred to as the \rev{multi-layer/multi-fidelity traversability map (MLMFTM).}
+%inspired by the  
 %We will refer to this architecture as the \emph{risk-range volume}, inspired by the 
-\emph{scale-space} architecture known within the computer vision community.
-
+%\emph{scale-space} architecture known within the computer vision community.
 The process by which individual layers feed into the overall traversability map $g$, is elaborated upon below.
 %How the individual layers feed into the overall traversability map $g$ is elaborated further below.
-
 \begin{figure}[thpb]
   \centering
-  \includegraphics[width=0.35\textwidth]{spot_iros/graphics/layered_costmap.png}
-  \caption{The mulit-layer/multi-range traversability map, called \emph{risk-range volume.}}
+  \includegraphics[width=0.3\textwidth]{spot_iros/graphics/layered_costmap.png}
+  \caption{The mulit-layer/multi-fidelity traversability map (MLMFTM)}
   \label{fig:layered_costmap}
 \end{figure}
 
-\ph{Sparse Traversability Evaluation}
-To enable a computationally tractable traversabilty analysis in order to subsequently create the risk-range volume, we only perform traversability analysis on a representative set of query points.
-The result is a sparse grid within the risk-range volume, for which the exact traversability risks are computed.
+% \begin{figure}[thpb]
+%   \centering
+%     \begin{subfigure}{0.5\linewidth}
+%         \centering
+%         \includegraphics[trim={4cm 3cm 4cm 3.5cm},clip, width=\linewidth]{graphics/costmap_bd2.png}
+%     \end{subfigure}%
+%     ~
+%     \begin{subfigure}{0.5\linewidth}
+%         \centering
+%         \includegraphics[trim={1cm 1cm 1cm 1cm},clip, width=\linewidth]{graphics/costmap_bd2_embedded.png}
+%     \end{subfigure}
+%     \caption{Left:  Risk map generated from Spot's onboard cameras with lethal (pink), high-risk but non lethal (red), and low risk (blue) regions. Right: Au-Spot risk map layer combined with LiDAR based risk map showing larger range of obstacles for a more robust and long-range planning.}
+%     \label{bd_costmap}
+% \end{figure}
 
+\ph{Sparse Traversability Evaluation}
+\rev{In order to keep the computation of the MLMFTM tractable, traversability analysis is performed only on a representative subset of cells $Q = \{i_t\}_{t=0}^T$.
+$Q$ can for example be selected by random sampling or by applying a lattice structure to the MLMFTM.
+The result is a sparse set of cells $Q$ within the MLMFTM, for which the exact traversability risks $\{p({}_{\ell}m^{i_t}=failure)\}_{t=0}^T$ are computed for each layer $\ell \in N$.}
 % Because of computational constraints, traversability can not be assessed for every grid cell of the map.
 % Instead, traversability is only checked for a sparse set of query points.
 %Hard thresholds are used for the sources a.) - c.) in order to assign binary risk values $r \in \{0,1\}$. 
 
-\ph{Dense Approximation}
+\ph{Dense \rev{Interpolation}}
 When planning smooth paths, high resolution
 %it is desirable to have a high resolution 
-in the \emph{range} dimension of the risk-range volume, is desirable.
-We approximate the risk-range volume at a higher resolution by inflating each query point along the \emph{range} dimension.
-The amount of inflation is determined by the risk value of the query point.
+in the \rev{spatial (horizontal)}dimension of the \rev{MLMFTM,}is desirable.
+We can approximate the \rev{MLMFTM}at a higher resolution by \rev{blurring with a gaussian kernel or by adding inflation with a radial decay to each query cell $i \in Q$ along the \rev{spatial}dimension.
+As a result, all $n \times l$ cells within the MLMFTM have a probability distribution assigned to them:
+\begin{align}
+    p({}_{\ell}m^{i}=safe) \hspace{10pt} \forall {\ell}=1,\cdots,N, \hspace{5pt} \forall i = 1,\cdots,n 
+\end{align}}
 %A decaying inflation layer is added to any lethal point ($r=1$), which results in smooth risk maps.
-
 % Sensor blind spots contribute a non-lethal risk and are identified by the respective sensor models.  
 %Deployed communication nodes, other robots and sensor blind spots are added as blobs of high risk to their respective risk maps $g_e$ and $g_f$.
 
 %\ph{Combined Risk}
 \ph{Superposition}
 %So far, t
-There are \rev{$N$}different \rev{layers} $\{g_1,...,g_N\}$ for the aforementioned risk sources.
+There are \rev{$N$}different \rev{layers} $\{{}_{1}g,...,{}_{N}g\}$ for the aforementioned risk sources.
 With consideration for planning purposes,
 %For planning purposes, 
-a single traversability map $g$ is created from the different layers.
-The different risk sources are not probabilistically independent. 
+a single traversability map $g$ is created from the different layers ${}_{\ell}g$.
+The different risk sources are not probabilistically independent, \rev{in general.} 
 \rev{However, we treat them as independent in order to approximate a conservative risk estimate by element-wise multiplication:}
 \begin{align}
-r^i = (1-m^i) = \prod_{k=1}^N(1-m_k^{i})
+p(m^i=safe) = \rev{\prod_{\ell=1}^Np({}_{\ell}m^{i}=safe)\hspace{5pt} \forall i = 1,\cdots,n}
 \end{align}
+
 %The multiplication of the individual risk values does not imply probabilistic independence, but rather gives us a conservative estimate for the combined risk.
 
-An mission obtained traversability map $g$ is shown in Fig. \ref{global_costmap}. % 4
-Magenta regions indicate \emph{high} regions, cyan indicates \emph{medium} risk and dark indicates \emph{low} risk regions.
+A traversability map $g$, which was obtained during a real mission, is shown in Fig. \ref{global_costmap}. % 4
+\rev{Magenta regions indicate regions with high probability of failure, cyan indicates medium probability of failure and dark indicates low failure probabilities.}
 
 \begin{figure}[thpb]
    \centering
@@ -625,10 +645,11 @@ Magenta regions indicate \emph{high} regions, cyan indicates \emph{medium} risk 
 %\ph{Solver}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Risk-Aware and Perception-Aware Planning} 
-Based on the traversablility map $g$, introduced in the previous section, we formulate the risk-aware planning problem
-as the process of finding a path which minimizes the overall path risk. %5
-$\pi^* = \arg\min_{\pi\in\Pi}\mathcal{R}^{\pi}(g)$.
+\subsection{Uncertainty and Perception-aware Planning} 
+% \ph{Uncertainty-Aware Planning}
+\rev{Based on the traversablility map $g$, we not only want a planning framework which maximizes the probability of safety along a path, but which also takes into account the uncertainty which comes from noisy, asymmetric, and limited sensors in order to command the robot along trajectories that maximally contribute to reducing uncertainty in the map $g$.}In the NeBula framework, we formalize this notion with an uncertainty-aware planner.
+
+
 %We search for the minimum risk path using A*.
 %The grid representation of the traversabiltiy map allows us to search for such a path using \rev{graph-search}algorithms,  such as A*.
 %\rev{A waypoint is selected along the path and is sent to Au-Spot's proprietary planner for execution.}
@@ -638,50 +659,110 @@ $\pi^* = \arg\min_{\pi\in\Pi}\mathcal{R}^{\pi}(g)$.
 %\ph{Stair Climbing}
 %A special case that is not handled by the local planner is stair climbing. \rev{Stairs will either appear as positive or negative obstacles in the risk map.} In the current setting, stair climbing is semi-autonomous. The human supervisor has to \rev {: \textit(i)} detect the presence of a stair case \rev{(e.g. from the robot Camera/LiDAR feed)}, \rev {\textit(ii)} switch Spot's internal planner to 'Stair' mode which configures the planner for climbing stairs, and then \rev {\textit(iii)} give \rev{a goal} at the end of the stair case. The actual climbing is then completely handled by Spot's internal planner and controller.
 %\subsection{Perception-Aware Planning}
-To compute risk, we take robot's perceptual capabilities into account. In particualr, this is an importnat observation for the Spot robot due to its asymmetic nad limited sensory field of view. %., it is preferable to command the robot to move in the forward direction, where sensor coverage is optimal.  
-In the NeBula framework, we formalize this notion with a perception-aware planner.
+
+% To compute the risk, we take the robot's perceptual capabilities into account. 
+% In particular, this is important for the Spot robot due to its asymmetric and limited sensory field of view. %., it is preferable to command the robot to move in the forward direction, where sensor coverage is optimal.  
 
 \ph{Uncertainty-aware Representation}
-We model each cell $m^i$ as a random variable, where $\hat{m}^i$ and $\sigma^{m^i}$ denote its mean and variance. The ``information" about $m^i$ is captured in $\sigma^i$, where fully unknown and fully known cells have the highest and lowest $\sigma^i$ values, respectively.  By explicitly capturing the learned information about each cell $m^i$, we can treat all the cells (known, unknown, partially-known) in a unified manner \rev{\cite{CRM}}. 
+\rev{Let $\mu^i$ be the mean of the Bernoulli distribution of $m^i$.  Then we can model the distribution (or our belief) of $\mu^i$ with some parameters, $p(\mu^i|\hat{\mu}^i,\sigma^{i})$ (e.g. a mean $\hat{\mu}^i$ and variance $\sigma^i$ in the case of a beta distribution).}The ``information" about $\mu^i$ is captured in $\sigma^i$, where fully unknown and fully known cells have the highest and lowest $\sigma^i$ values, respectively \rev{\cite{CRM}}. 
 
 \ph{Uncertainty-aware map prediction}
 This representation allows us to incorporate perceptual capabilities %(hence the name "perceptual" in NeBula) 
-into the planning. Given the sensors available on the robot and their configuration and noise characteristics, we can derive models that predict the evolution of $\sigma^i$ based on the sensor configuration and most likely measurements along a given trajectory $\pi$. 
+into the planning. Given the sensors available on the robot and their configuration and noise characteristics, \rev{we can derive a recursive filtering model $\tau$ that predicts the evolution of $(\hat{\mu}^i,\sigma^i)$}based on the sensor configuration and most likely measurements along a given trajectory $\pi$ with \rev{$k=0,\cdots,K$ time steps:} 
 % \begin{align}
 %  \sigma^i_k = \tau( \sigma^i_0, z_{0:k}(\pi) )
 % \end{align}
-\begin{align}
- \sigma^i_k = \tau^{batch}( \sigma^i_0, z_{0:k}(\pi) )=\tau( \sigma^i_{k-1}, z_{k}(\pi) )
-\end{align}
-where the measurements $z_0,\cdots,z_k$ are predicted at each of the first $k$ time steps along the path $\pi$.
-This becomes increasingly important when the sensor configuration is highly asymmetric on a robot, which is the case for Spot as it has blind spots and areas where sensory measurement noise is considerably higher than other areas.
-Maintaining separate probability distributing for individual cells in the map, We predict the map $g$ for $k$ time steps in the future along the trajectory $\pi$ by 
+\rev{\begin{align}
+ (\hat{\mu}^i_k, \sigma^i_k) =\tau( \sigma^i_{k-1}, z_{k}(\pi) )
+\end{align}}
+\rev{where the measurements $z_0,\cdots,z_K$ are predicted from a generative model.}This becomes increasingly important when the sensor configuration is highly asymmetric on a robot, which is the case for Spot as it has blind spots and areas where sensory measurement noise is considerably higher than other areas.
+Maintaining separate probability distributions for individual cells in the map, we predict the map $g$ for $k=0,\cdots,K$ time steps into the future along the trajectory $\pi$ by: 
 % \begin{align}
 %  g_k = \{p(m|m^1_k,\sigma^1_k),\cdots,p(m|m^n_k,\sigma^n_k)\}   
 % \end{align}
 \begin{align}
- g_k = \{p(m^1|\hat{m}^1_k,\sigma^1_k),\cdots,p(m^n|\hat{m}^n_k,\sigma^n_k)\}   
+ g_k = \{p(\mu^1|\hat{\mu}^1_k,\sigma^1_k),\cdots,p(\mu^n|\hat{\mu}^n_k,\sigma^n_k)\}   
 \end{align}
-where $p(m^i|\hat{m}^i_k,\sigma^i_k)$ is the probability distribution of $m^i$ parameterized by $\hat{m}^i_k$ and $\sigma^i_k$.
-As a result, we define a risk measure that takes perceptual capabilities and uncertainties into account when planning trajectories, by minimizing accordingly:
+where $p(\mu^i|\hat{\mu}^i_k,\sigma^i_k)$ is the probability distribution of $\mu^i$ at the $k^{th}$ time step parametrized by $\hat{\mu}^i_k$ and $\sigma^i_k$.
+
+\rev{\ph{Risk-Aware/Perception-Aware Planning}}
+As a result, we define a risk measure that takes perceptual capabilities and uncertainties into account when planning trajectories, by minimizing the total path risk along the $K$-step path:
 % \begin{align}
 %  \mathcal{R}_k^{\pi}=1-\prod_{t=0}^Tp(m|m_k^{i_t},\sigma_k^{i_t}),~~~
 %     \pi^* = \arg\min_{\pi\in\Pi}\mathbb{E}[\mathcal{R}_k^{\pi}(g_k)]
 % \end{align}
+\rev{
 \begin{align}
-\!\!\! \mathcal{R}_k^{\pi}=1-\prod_{i\in\pi}p(m^i|\hat{m}_k^{i},\sigma_k^{i}),~~
-    \pi^* = \arg\min_{\pi\in\Pi}\mathbb{E}[\mathcal{R}_k^{\pi}(g_k)]
-\end{align}
+ \mathcal{R}_K^{\pi} &= 1 - \prod_{k=0}^K p(m^{i_k}=safe) \\
+ &= 1 - \prod_{k=0}^K\int_0^1 p(m^{i_k} = safe|\mu)p(\mu|\hat{\mu}_k^{i},\sigma_k^{i}) d\mu\\
+ \pi^* &= \arg\min_{\pi\in\Pi}\mathbb{E}[\mathcal{R}_K^{\pi}]
+ \label{eq:risk}
+\end{align}}
+
 Efficient methods for computing predicted risk uncertainty over a 2-D grid for a given sensor model have been considered in~\cite{CRM}.
 %Ali-akbar Agha-mohammadi, Eric Heiden, Karol Hausman and Gaurav S. Sukhatme, “Confidence-rich 3D Grid Mapping: Toward High-speed Vision-based UAV Navigation,” International Journal of Robotics Research (IJRR), vol.38, pp.1352-1374, 2019.
 
-\ph{Real-time planning}
-To satisfy real-time planning requirements of the mission, we ... rely on a cascaded policy space, where we decomposne teh path parameters to position and orientation. We first use a pre-defined policy that maps teh direction of walking to the robot heading. Then we perform the optimizaiotn over the robot position to manimize the risk given. We use A* algorihtm over the grid g to search for hte best path $\pi$.  
+\ph{Real-Time Planning}
+%1 Let $\pi=\{i_k\}_{k=0}^K$ denote a path defined as a sequence of connected cells $i_k \in g$. \rev{The set of all paths that connect the current robot pose with the goal is denoted by $\Pi$.}
+%Heurstics in practice:
+\rev{To enable real-time planning, we rely on a cascaded policy space, where we decompose the path $\pi$ into position and orientation $\pi = (\pi_p,\pi_\theta)$ in order to make the planning problem in Eq. \ref{eq:risk} computationally tractable. 
+
+We first reduce the search space $\Pi$ in Eq. \ref{eq:risk} by computing the minimum-risk path $\pi_p^*$ based on the prior distribution $p(g|\mu=\hat{\mu})$:
+
+Let $\pi_p=\{i^t\}_{t=0}^T$ denote a position path defined as a sequence of connected cells $i^t \in g$. The set of all position paths that connect the current robot position with the goal position is denoted by $\Pi_p$.
+
+We define the total accumulated risk of the position path $\pi_p\in\Pi_p$ as 
+ \begin{align}
+  \mathcal{R}^{\pi_p}=1 - \prod_{t=0}^Tp(m^{i_t}=safe|\mu^{i_t}=\hat{\mu}^{i_t})
+\end{align}
+
+Then, the minimum risk path $\pi_p^*$ is defined as:
+
+\begin{align}
+  \pi_p^* = \arg\min_{\pi_p\in\Pi_p}\mathcal{R}^{\pi_p}
+  \label{eq:risk_planning}
+\end{align}
+
+The grid structure of $g$ enables us to use a graph-search method, such as A*.
+
+The new, reduced, optimization problem can therefore be written as:
+\begin{align}
+ \pi^* = (\pi_p^*,\pi_\theta^*) = \arg\min_{\pi\in\Pi|\pi_p = \pi_p^*}\mathbb{E}[\mathcal{R}_K^{\pi}]
+ \label{eq:decoupled}
+\end{align}
+
+
+For the legged Au-Spot platform considered in this paper, choosing the orientations in $\pi_\theta^*$ to be positively tangential to $\pi_p^*$ turned out to be a simple heuristic that approximates Eq. \ref{eq:decoupled}.
+%The heuristic consists of choosing the sequence of orientations $\pi_\theta^*$ to be the positive tangent to the found minimum-risk position path $\pi_p^*$.
+This heuristic is motivated by Au-Spot's asymmetric field-of view, where the coverage in the front is superior to every other direction, especially the back where sensor blind spots exist.
+Intuitively, this heuristic will cause Au-Spot to less side-step and walk backward.}
+
+% We define the total accumulated risk of the path $\pi\in\Pi$ as 
+%  \begin{align}
+%   \mathcal{R}^{\pi}=1 - \prod_{t=0}^Tp(m^{i_k}=safe)
+% \end{align}
+% which is the probability that the robot fails to safely traverse the path $\pi$.  
+% $\pi^* = \arg\min_{\pi\in\Pi}\mathcal{R}^{\pi}(g)$.
+
+%In a second, step the remaining part of the policy (heading) is found which solves Eq. \ref{eq:risk}.}
+
+%We first use a pre-defined policy that maps the direction of walking to the robot heading. Then 
+
+  
 %To realize this behavior, in the case of integration of NeBula with Spot, we found that a simple heuristic sufficed to approximate the optimal solution $\pi^*$.  
 %This heuristic was to solve for deterministic A* paths (Equation \ref{deterministic_plan}) and then to give a desired location and orientation to Au-Spot as a waypoint along this path, such that the relative heading between the current robot position and the waypoint itself is minimized. 
 
 \ph{Execution}
-We execute the generated path in a RHC-like framework. Specifically, we selected way point along the path, send this to the robot, and while robot is moving towards the waypoint, we resolve the path planning problem to generate a new path from the new waypoint. We recuresibly  continue this proecess. This results in a behavior where the robot orients itself to a direction that maximizes the sensory input relevant to teh task in hand (in this case minimizing the failure probaibltiy) whenever possible. The RHC way points along the path are chosen by trading off several parameters including: 1) avoiding local minima and increasing perception-awareness which requires more frequent and nearby waypoints, and 2) to ensure the SPOT stability and smooth motion the waypoints needs to be sufficiently spaced out.
+\rev{We execute the planning problem outlined in Eq. \ref{eq:risk_planning} and Eq. \ref{eq:decoupled} in a receding-horizon fashion. 
+Specifically, we select waypoint at a distance $d$ along the path $\pi^*$, send it to the robot, and while robot is moving towards the waypoint, we resolve the path planning problem to generate a new path from the new robot position. 
+
+There are two contradicting requirements when choosing the parameter $d$:
+\begin{enumerate}
+    \item Spot runs a proprietary planner, independent of NeBula, which has much shorter range than what NeBula can deliver. If $d$ is chosen too big, we have no guarantee that the executed path will be close to $\pi^*$ anymore.
+    \item When exploring unknown environments, the planned path $pi^*$ can jump between planner iterations, due to newly observed obstacles. Making $d$ too small will lead to jumps in the chosen waypoint as well. This is especially problematic as Spot is an omnidirectional robot, which can sidestep.
+\end{enumerate}}
+
+%We recursively  continue this process. This results in a behavior where the robot orients itself to a direction that maximizes the sensory input relevant to the task in hand (in this case minimizing the failure probability) whenever possible. The RHC way points along the path are chosen by trading off several parameters including: 1) avoiding local minima and increasing perception-awareness which requires more frequent and nearby waypoints, and 2) to ensure the SPOT stability and smooth motion the waypoints needs to be sufficiently spaced out.
 
 %Holonomicity of the robot allows us it to orient itself in any direction as it moves.  
 %Furthermore, the sensor coverage from Spot's internal cameras is good in the near-field, while the NeBula Sensor Package LiDAR is good in the far field. 
@@ -693,20 +774,7 @@ We execute the generated path in a RHC-like framework. Specifically, we selected
 %We combine these two streams of data to compute risk (see Fig. \ref{bd_costmap}).  
 %Future work will involve bringing the more advanced uncertainty-aware planning from the NeBula framework into Spot. 
 
-\begin{figure}[thpb]
-   \centering
-    \begin{subfigure}{0.5\linewidth}
-        \centering
-        \includegraphics[trim={4cm 3cm 4cm 3.5cm},clip, width=\linewidth]{graphics/costmap_bd2.png}
-    \end{subfigure}%
-    ~
-    \begin{subfigure}{0.5\linewidth}
-        \centering
-        \includegraphics[trim={1cm 1cm 1cm 1cm},clip, width=\linewidth]{graphics/costmap_bd2_embedded.png}
-    \end{subfigure}
-    \caption{Left:  Risk map generated from Spot's onboard cameras with lethal (pink), high-risk but non lethal (red), and low risk (blue) regions. Right: Au-Spot risk map layer combined with LiDAR based risk map showing larger range of obstacles for a more robust and long-range planning.}
-    \label{bd_costmap}
-\end{figure}
+
 
 % \begin{itemize} % For Mission Autonomy(Behavstmap) -> iours, IRM) probably we just gonna cite Scott and Kyon aero paper. 
 %         \item Traversability (settling, collision check, slope check, negative obstacles,..) (David?)
@@ -714,7 +782,7 @@ We execute the generated path in a RHC-like framework. Specifically, we selected
 % \end{itemize}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Mission planning}\label{sec:mission_planning}
+\section{Mission Planning}\label{sec:mission_planning}
 %\inst{not clear if we need this section}
 %\todo{Scott-Kyon-FadNik} \ph{Mission and its challenges}
 
@@ -732,66 +800,117 @@ We denote the behavior library as
 \end{align}
 The role of the mission planner is to generate a sequence of behaviors:
 \begin{align}
-    (B_0,B_1,\cdots,B_T) = \arg\min MissionRisk(\mathcal{B})
+    (B_0,B_1,\cdots,B_T) = \arg\min \; \textit{MissionRisk} (\mathcal{B}) 
 \end{align}
+
 A given behavior $B^i$ is executed by (i.e., defined as) visiting a set of anchor points (i.e., nodes) in the information space as explained further below. 
 
-%\todo{Sung-Amanda-David} \ph{IRM}
-\ph{Mission Risk}
-To quantify the aforementioned mission risk, we first create a sparse graph structure $G = (V, E)$ to capture the connectivity of the free space in the environment. 
-We refer to this graph as the IRM (information roadmap) as its nodes ($V$) and edges ($E$) are enriched by various environmental and robot-related properties. As an example, in the Urban Circuit, a node at the entrance of a staircase is marked with a special attribute which indicates that a high level of traversability%, unique to Spot, 
-is required to plan paths through this node. 
 
-\ph{Information Roadmap}
-IRM nodes are categorized as either breadcrumbs ($\beta\in\mathbb{B}$), frontiers ($f\in F$), or the home base ($h\in H$) where the mission is initiated. 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% \ph{Intractability} However, computing an optimal sequence of actions over the map $g$ is computationally infeasible. To obtain a tractable solution, we introduce an approximation of the environment with a information-rich bidirectional graph structure which reduces the policy search space.
+
+% \ph{Approach} Computing the optimal sequence of actions over a dense map, such as $g$, is computationally infeasible since .To obtain a tractable solution, we introduce an approximation of the environment with a information-rich bidirectional graph structure which reduces the policy search space.
+
+\rev{\ph{Global Planner Objective} The global planning objective is to find the minimum length trajectory such that the entire surface of the environment is within the accumulated sensor field-of-view. To solve this problem, we introduce an approximation of the environment with a information-rich graph structure which reduces the policy search space to one that is tractable when planning in large environments over long horizons.
+
+\ph{Global Planner Structure} We employ a sparse bidirectional graph $G = (V, E)$ that captures the connectivity of free space in the environment. A node $v_i \in V$ represents a robot pose, and an edge $e_{ij} \in E$ represents a robot transition between connected nodes $v_i$ and $v_j$. Each node $v_i$ has attached to it a feature vector containing the probability $p_{cov}(v_i)$ that the robot has seen a sensor-defined neighborhood around the node. Likewise, each edge $e_{ij}^g$ has attached to it a feature vector containing the risk of traversal between connected nodes $v_i$ and $v_j$, computed according to Eq.~(\ref{eq:risk}). We define the output of a graph-level policy $\pi^g(v_i)$ to be a nearby node connected via a path through free space.
+
+\ph{[WIP] Maintenance of GP Structure: Frontiers and Breadcrumbs} 
+Graph nodes are categorized as either frontier nodes $v_f \in V$, breadcrumb nodes $v_b \in V$, or the home base node $v_h \in V$ where the mission is initiated. A frontier node $v_f$ is generated at locations where we expect to see changes in the map belief $p(V)$. We generate these frontiers by simulating a rollout policy that predicts how the graph will grow at $v_f$ by taking multiple actions into the future. 
+
+% For the frontier $v_f$ with planning depths $K$, we can write the belief of the frontier to be $b_{f,k} = p(M_k, x_k = x_f)$. 
+
+A breadcrumb node $v_b$ is generated at locations where no changes to the map belief $p(V)$ will occur. This means we consider breadcrumb nodes to be locations where the map is fully explored.
+
+...We solve for the graph policy on the expanded graph  
+
+
+\ph{Action Information Gain} Entropy is a measure for the uncertainty of a posterior. The entropy $H_p(x) = E[-\log p(x)]$ is the expected information that $x$ contains if $x$ happens with probability distribution $p$. The posterior uncertainty of the graph structure is:
 \begin{align}
-    V = (F, \mathbb{B}, H)
+    H_{p_{cov}}(V) = -\sum_{v_i \in V}p_{cov}(v_i) \log p_{cov}(v_i) + \\ \left(1-p_{cov}(v_i)) \log (1-p_{cov}(v_i)\right)
 \end{align}
-Frontier nodes are located at the boundary between unexplored and known space, and are connected to breadcrumb nodes though collision-free edges. %9
-Pose graph-fixed breadcrumb nodes trace the history of the robot's motions and, hence, indicate both known areas and traversable paths via breadcrumb edge connections. %4.5
-Furthermore, since robots share their pose graph with one another, frontier nodes are never placed in already explored areas.  
-%Also, frontier nodes and their edge connections on the IRM encode where the unexplored regions are, how significant they are for the global coverage, and how to traverse to them in this multi-level environment.
-%The global planning module provides services to maintain and query the IRM, such as adding/pruning frontier nodes. Behaviors can query the global planner for the shortest path to frontiers, closest stairs, and the base station. Additionally, the planner is responsible for ensuring that the locations of the IRM nodes remains consistent after a pose-graph relaxation from the global localization module.  
+The uncertainty reduction, or information gain, associated with an action $\pi^g(v_i)$ in belief $p_{cov}(V)$ is:
+\begin{align}
+    % I(\pi(v_i), w_{cov}) &= H_{p_{cov}}(V) - H_{p_{cov}}(V^\prime; \pi(v_i), w_{cov}) \\
+    I(V; \pi(v_i)) &= \underbrace{H_{p_{cov}}(V)}_\text{current entropy} - \underbrace{H_{p_{cov}}(V^\prime; \pi(v_i))}_\text{future entropy}
+\end{align}
+where the second term represents the expected future entropy of the graph after the agent has executed action $\pi^g(v_i)$. The successor graph state $p_{cov}(V^\prime)$ is computed according to Bayes' theorem. 
 
+% \ph{Action Cost} The cost $C(E; \pi^g(v_i))$ associated with an action $\pi^g(v_i)$ is defined as:
 % \begin{align}
-%     E = (T, D, ...)
+%     C(E; \pi^g(v_i)) = \alpha_R \mathcal{R}(v_i,\pi^g(v_i)) + L
 % \end{align}
 
-%\todo{Amanda-David-Sung}
-\ph{Exploration Planning} 
-The objective of the global planning module is to assign frontiers as terminal goals to maximize global coverage of the environment by multiple robots, including the Au-Spots, for the allotted time. Frontier goals are assigned to the robot according to either a local or global selection approach. 
-\subsection{Local Frontier Selection}
-Given the robot's current pose ($x_k$), we select a frontier goal ($f_g$) with minimum bearing (i.e. relative planar angle between robot's forward direction and frontier location), subject to traversability and bearing constraints:
+\ph{[WIP] Global Planner Objective Function} We define the one-step reward to be the weighted sum of information gain $I$ and traversal cost associated with an action $\pi^g(v)$:
 \begin{align}
-    J^{local}(V, E, x_k) &= \theta_{bearing}(x_k, f) 
+    R(v_i, \pi^g(v_i)) &= \alpha_I I(V; \pi^g(v_i)) - \alpha_C L 
 \end{align}
+where $\alpha_I$ and $\alpha_R$ weigh the information gain and traversal cost, respectively. We let $k=0,...,K$ indicate the graph-level time-steps. Then we find the sequence of actions that maximizes the sum of future expected reward on the graph for a graph-level policy $\pi^g$:
 \begin{align}
-    f_g &= \arg\min_{f\in V} J^{local}(V, E, x_k)\\
-    ~s.t.,~~~ & P_{travs}(x_k, f) > \gamma \nonumber \\
-    % & f \in Disc(x_k, r)\\ NOTE we choose this range so we can make a judgement about traversability, so prob not necessary to make it a separate constraint
-    & |\theta_{bearing}(x_k, f)| < \pi/2 \nonumber
+    \pi^*_{k:K} &= \arg\max_\pi \, \mathbb{E} \left[ \sum_{k'=k}^{K} R(v_{k'}, \pi^g(v_{k'}))) \right] \\
+    ~s.t.,~~~ & \mathcal{R}^{\pi^g(v_i)} > \gamma \nonumber 
 \end{align}
-$P_{travs}(x_k, f)$ is the probability of a traversal between $x_k$ and $f$. 
-While the first constraint ensures that the selected frontier is traversable, the latter constraint on the bearing angle $\theta_{bearing}(x_k, f)$ results in a depth-first exploration behavior. 
-Note that for the local frontier selection, the frontiers in the direction of robot's current heading are preferred in order to minimize velocity changes during traversal. This scheme is particularly helpful for Au-Spot so that it can walk continuously at higher speeds and minimize turning motions which may cause risky foot placements at the blind spots (at the rear-left and -right) of the robot.
 
-\subsection{Global Frontier Selection}
-Global frontier selection is initiated if no frontier exists satisfying local selection constraints. Frontiers $F$ in the IRM $G$ are clustered according to the minimum number of edges connecting any two sets of observations through a hierarchical agglomerative clustering strategy. A cluster is defined as:
-\begin{align}
-    % cluster(f) = \{ f' | d(f', f) < n_{E} \}\in\mathcal{C}
-    C(f) = \{ f' | dist(f', f) < n_{E} \}\in\mathcal{C} 
-\end{align}
-Since cluster size is indicative of an unexplored region's expanse, we use it to predict expected information gain, or the utility of traversing to a frontier in that cluster. For a given cluster, the minimum number of edges between the robot's current position and the cluster is the cost of traversal. We select a frontier goal $f_g$ closest to the centroid of the cluster $C_g(f)$ which maximizes our cost-utility function:
-\begin{align}
-    J^{global}(V, E, x_k) = w_{d}(dist(x_k, f))^{-1} + w_{s}|C(f)|
-\end{align}
-\begin{align}
-    C_g(f) &= \arg\max_{C\in \mathcal{C}} J^{global}(V, E, x_k) \\
-    % ~s.t.,~~~ & dist(x_k, C) < \gamma' \nonumber \\
-    f_g &= \arg\min_{f\in C_g(f)} dist(f, centroid(C_g(f)))
-\end{align}
-where $w_d$ and $w_s$ weigh the cost of traversal and new information gain, respectively. 
-A robot travels to a global frontier goal $f_g$ by backtracking and planning paths along its breadcrumbs.
+\ph{Unified Policy: Global Policy + Perception-Aware}
+
+}
+
+
+% We refer to this graph as the IRM (information roadmap) as its nodes ($V$) and edges ($E$) are enriched by various environmental and robot-related properties. As an example, in the Urban Circuit, a node at the entrance of a staircase is marked with a special attribute which indicates that a high level of traversability%, unique to Spot, 
+% is required to plan paths through this node. 
+
+% \ph{Information Roadmap}
+% IRM nodes are categorized as either breadcrumbs ($\beta\in\mathbb{B}$), frontiers ($f\in F$), or the home base ($h\in H$) where the mission is initiated. 
+% \begin{align}
+%     V = (F, \mathbb{B}, H)
+% \end{align}
+% Frontier nodes are located at the boundary between unexplored and known space, and are connected to breadcrumb nodes though collision-free edges. %9
+% Pose graph-fixed breadcrumb nodes trace the history of the robot's motions and, hence, indicate both known areas and traversable paths via breadcrumb edge connections. %4.5
+% Furthermore, since robots share their pose graph with one another, frontier nodes are never placed in already explored areas.  
+% %Also, frontier nodes and their edge connections on the IRM encode where the unexplored regions are, how significant they are for the global coverage, and how to traverse to them in this multi-level environment.
+% %The global planning module provides services to maintain and query the IRM, such as adding/pruning frontier nodes. Behaviors can query the global planner for the shortest path to frontiers, closest stairs, and the base station. Additionally, the planner is responsible for ensuring that the locations of the IRM nodes remains consistent after a pose-graph relaxation from the global localization module.  
+
+% % \begin{align}
+% %     E = (T, D, ...)
+% % \end{align}
+
+% %\todo{Amanda-David-Sung}
+% \ph{Exploration Planning} 
+% The objective of the global planning module is to assign frontiers as terminal goals to maximize global coverage of the environment by multiple robots, including the Au-Spots, for the allotted time. Frontier goals are assigned to the robot according to either a local or global selection approach. 
+% \subsection{Local Frontier Selection}
+% Given the robot's current pose ($x_k$), we select a frontier goal ($f_g$) with minimum bearing (i.e. relative planar angle between robot's forward direction and frontier location), subject to traversability and bearing constraints:
+% \begin{align}
+%     J^{local}(V, E, x_k) &= \theta_{bearing}(x_k, f) 
+% \end{align}
+% \begin{align}
+%     f_g &= \arg\min_{f\in V} J^{local}(V, E, x_k)\\
+%     ~s.t.,~~~ & P_{travs}(x_k, f) > \gamma \nonumber \\
+%     % & f \in Disc(x_k, r)\\ NOTE we choose this range so we can make a judgement about traversability, so prob not necessary to make it a separate constraint
+%     & |\theta_{bearing}(x_k, f)| < \pi/2 \nonumber
+% \end{align}
+% $P_{travs}(x_k, f)$ is the probability of a traversal between $x_k$ and $f$. 
+% While the first constraint ensures that the selected frontier is traversable, the latter constraint on the bearing angle $\theta_{bearing}(x_k, f)$ results in a depth-first exploration behavior. 
+% Note that for the local frontier selection, the frontiers in the direction of robot's current heading are preferred in order to minimize velocity changes during traversal. This scheme is particularly helpful for Au-Spot so that it can walk continuously at higher speeds and minimize turning motions which may cause risky foot placements at the blind spots (at the rear-left and -right) of the robot.
+
+% \subsection{Global Frontier Selection}
+% Global frontier selection is initiated if no frontier exists satisfying local selection constraints. Frontiers $F$ in the IRM $G$ are clustered according to the minimum number of edges connecting any two sets of observations through a hierarchical agglomerative clustering strategy. A cluster is defined as:
+% \begin{align}
+%     % cluster(f) = \{ f' | d(f', f) < n_{E} \}\in\mathcal{C}
+%     C(f) = \{ f' | dist(f', f) < n_{E} \}\in\mathcal{C} 
+% \end{align}
+% Since cluster size is indicative of an unexplored region's expanse, we use it to predict expected information gain, or the utility of traversing to a frontier in that cluster. For a given cluster, the minimum number of edges between the robot's current position and the cluster is the cost of traversal. We select a frontier goal $f_g$ closest to the centroid of the cluster $C_g(f)$ which maximizes our cost-utility function:
+% \begin{align}
+%     J^{global}(V, E, x_k) = w_{d}(dist(x_k, f))^{-1} + w_{s}|C(f)|
+% \end{align}
+% \begin{align}
+%     C_g(f) &= \arg\max_{C\in \mathcal{C}} J^{global}(V, E, x_k) \\
+%     % ~s.t.,~~~ & dist(x_k, C) < \gamma' \nonumber \\
+%     f_g &= \arg\min_{f\in C_g(f)} dist(f, centroid(C_g(f)))
+% \end{align}
+% where $w_d$ and $w_s$ weigh the cost of traversal and new information gain, respectively. 
+% A robot travels to a global frontier goal $f_g$ by backtracking and planning paths along its breadcrumbs.
 % Since the robots share their explored regions with each other, the global planner can automatically deploy them to different sectors of the environment. 
 % \begin{align}
 %     J(V, E; x_k) = dAng(f, x_k)
@@ -834,66 +953,84 @@ A robot travels to a global frontier goal $f_g$ by backtracking and planning pat
 
 \begin{figure}[t!]
   \centering
-  \includegraphics[width=0.47\textwidth]{graphics/spot_proposed_eagle_rock.PNG}
-  \caption{Map created by Au-Spot exploration of Eagle Rock Substation, Los Angeles \rev{\st{(CA)}} with different odometry sources: proposed method in green against a) KO and b) KVO}
+  \includegraphics[width=0.4\textwidth]{spot_iros/graphics/spot_eagle_rock_shrinked_black.png}
+  \caption{Map created by Au-Spot exploration of Eagle Rock Substation, Los Angeles \rev{\st{(CA)}} with different odometry sources: proposed method in green against a) KO and b) KVO.}
   \label{spot_eagle_rock}
 \end{figure}
 
 \begin{figure}[t!]
   \centering
-  \includegraphics[width=0.47\textwidth]{spot_iros/graphics/spot_proposed_office.PNG}
+  \includegraphics[width=0.4\textwidth]{spot_iros/graphics/spot_proposed_office.PNG}
   \caption{Map created by Au-Spot while exploring an office building at NASA's JPL with different odometry sources: a) KO b) KVO c) Proposed}
   \label{spot_indoor_office}
 \end{figure}
 
 
-\ph{Stair Climbing}
-A special case that is not handled by the local planner is stair climbing. 
-%\rev{Stairs will either appear as positive or negative obstacles in the risk map.} 
-In the current setting, stair climbing is semi-autonomous. The human supervisor has to \rev {\textit(i)} detect the presence of a stair case \rev{(e.g. from the robot Camera/LIDAR feed)}, \rev {\textit(ii)} switch Spot's internal planner to 'Stair' mode which configures the planner for climbing stairs, and then \rev {\textit(iii)} give \rev{a goal} at the end of the stair case. The actual climbing is then completely handled by Spot's internal planner and controller.
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Experimental Results}\label{sec:experiments}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %\todo{everyone}\inst{combine below two paragraphs}
-The NeBula autonomy framework is implemented onto two Boston Dynamics Spot robots and has been field-proven in subsurface, multi-level, perceptually degraded and GPS-denied environments, including office buildings, underground buildings and power plants.
+The NeBula autonomy framework is implemented onto two Boston Dynamics Spot robots and has been field-proven in subsurface, multi-level, perceptually degraded and GPS-denied environments, including office buildings, underground structures and industrial power plants.
 
-As part of the Urban Circuit of the DARPA Subterranean Challenge, two Au-Spots were deployed into the Satsop Power Plant in February 2020 for live-mission exploration and artifact detection e.g. backpacks, gas leaks, human survivors. 
-The Au-Spots were able to explore \rev{the plant successfully and accurately report artifact locations back to the human-supervised base station, in real-time.}
-
+As part of the Urban Circuit of the DARPA Subterranean Challenge, two Au-Spots were deployed into an Industrial Plant in February 2020 for live-mission exploration, 3D-Mapping of the environment (Fig. \ref{fig:alpha_course_stairs_map}) including detection of artifacts of interest (e.g., backpacks, gas-leaks, human survivors) over four live-missions. %between two different courses (two Alpha course attempts and two Beta course attempts) where their best score for each course was tallied and counted towards their final score. 
+The Au-Spots explored a combined distance of 4km, including successfully climbing multiple flights of stairs, in all live-missions. Points were awarded for accurate artifact detection and for successfully reporting it back to the base-station.   
+% TODO July 29: Describe there are four runs --Thomas: DONE
+%The Au-Spots were able to explore \rev{the plant successfully and accurately report artifact locations back to the human-supervised base station, in real-time.}
 %multi-level environments and report back accurate artifact locations to the human supervisor at the base station.
-
-\rev{Both Au-Spots traveled a combined distance of 4km in four runs, including successfully climbing multiple flights of stairs, four times.}
+The Au-Spots successfully detected and localized a total of 16 artifacts, capturing 16 points and thus propelling our team CoSTAR to a 1st-place victory. %25 artifacts across all four runs with the best scores from each course amounting to 16 points which propelled our team CoSTAR to a 1st-place victory. The Au-Spots explored a combined distance of 4km, including successfully climbing multiple flights of stairs, in all live-missions.
 %Specifically, the two traveled a combined distance of 4 km in four runs, including four successful stair climbing of multiple flights of stairs. 
-\rev{The Au-Spots successfully detected a total of 25 artifacts across all four runs of Alpha and Beta courses, with the best runs of each course amounting to a grand total of 16 points for our team, CoSTAR.}
+
 %mentioning the sensors is kind of redundant, we have mentioned that that is how they do their detection earlier in the paper and we know that Au-Spot is NeBula enabled. 
 
+
+
+
+
+
+
+
+
+
 \ph{Odometry Estimation}
-To demonstrate the performance of the proposed multi-modal odometry pipeline on a legged robot, we evaluate and compare the localization accuracy using individual sensing channels with the proposed uncertainty-aware multi-sensor approach in perceptually-degraded environments. 
+\rev{To demonstrate the performance of the proposed odometry pipeline, we compare the localization accuracy achievable using individual sensing channels with the proposed uncertainty-aware multi-sensor approach in perceptually-degraded environments. Figure \ref{spot_eagle_rock} depicts the results of the proposed method on data collected in the Eagle Rock subway station, Los Angeles. The harsh nature of the ground causes KO to perform poorly while the good amount of visual features makes KVO result in a sufficiently accurate map. Conversely, Fig. \ref{spot_indoor_office} depicts the results from the data collected in NASA JPL's 198/161 offices. In this case, the soft carpet on the floor makes KO provide much more accurate maps than KVO which is instead challenged by feature-less white walls and the texture-repetitive pattern of the carpet. Features of various courses make perception and odometry estimation challenging to various sensing channels, hence the need for multi-channel odometry fusion. As seen in both figures the proposed odometry generation method results in consistently more accurate maps than those obtainable by KO or KVO-based odometry.}
 
-Fig. \ref{spot_eagle_rock} depicts the results of the proposed method on data collected in an underground subway station in Eagle Rock, Los Angeles. As seen in this figure, KO performs poorly in this environment whereas KVO results in a reasonably accurate map. %On the other hand, 
-Conversely, Fig. \ref{spot_indoor_office} shows the results from the data collected in NASA JPL's 198/161 buildings where KO provides much more accurate maps than KVO. Features of various courses makes the perception and odometry challenging to various sensing channels. 
+% -------------------------------------------------------------------
 
-%As can be seen in these figures, 
-\rev{As seen in Fig. \ref{spot_eagle_rock} and Fig. \ref{spot_indoor_office},}the proposed odometry generation method results in consistently more accurate maps than those obtainable by KO or KVO-based odometry. %is computationally light-weight and therefore accounts for the limited computational capability of the on board processing unit.
+% Eagle Rock: A) Hard concrete surface (bad KO), B) Visually-rich environment (good VO), C) HeRO detects jumps in KO and chooses VO
 
-Finally, the proposed odometry solution was employed by team CoSTAR's Au-Spots at the DARPA Subt Challenge and this resulted in highly accurate maps.
+% 198 Office: A) Soft moquette surface (good KO), B) Texture-repetitive moquette and featureless walls (bad VO), C) HeRO detects jumps in VO and chooses KO
+
+% -------------------------------------------------------------------
+
+%To demonstrate the performance of the proposed odometry pipeline on a legged robot, we evaluate and compare the localization accuracy using individual sensing channels with the proposed uncertainty-aware multi-sensor approach in perceptually-degraded environments. Figure \ref{spot_eagle_rock} depicts the results of the proposed method on data collected in an underground subway station in Eagle Rock, Los Angeles. As seen in this figure, KO performs poorly in this environment whereas KVO results in a sufficiently accurate map. Conversely, Fig. \ref{spot_indoor_office} depicts the results from the data collected in NASA JPL's 198/161 buildings where KO provides much more accurate maps than KVO. Features of various courses makes the perception and odometry challenging to various sensing channels, hence the need for multi-channel odometry fusion. As seen in Fig. \ref{spot_eagle_rock} and Fig. \ref{spot_indoor_office}, the proposed odometry generation method results in consistently more accurate maps than those obtainable by KO or KVO-based odometry. 
+
+
+
+
+
+
+
+
+
+%Finally, the proposed odometry solution was employed by team CoSTAR's Au-Spots at the DARPA Subt Challenge and this resulted in highly accurate maps.
 
 %Finally, the proposed odometry solution has been employed on two Spot robots of the CoSTAR team during the exploration of a dismissed multi-level power plant in Elma, WA at the Urban Circuit of the DARPA SubT Challenge, resulting in highly accurate maps. % and leading to the first place for the CoSTAR team in this challenge. 
 
 \begin{figure}[t!]
   \centering
-  \includegraphics[width=0.4\textwidth]{spot_iros/graphics/coverage_matteo.png}
+  \includegraphics[width=0.35\textwidth]{spot_iros/graphics/coverage_matteo.png}
   %\caption{Area explored by a fleet of two Spots and two wheeled robots.  Colored pointclouds indicate explored areas, with colors indicating z height, spanning 3 floors. (Image credit: DARPA).}
-  \caption{\rev{Area explored in the SubT Beta course by a fleet of two UGV's and one Au-Spot. Colors indicate robot-specific coverage (Red: UGV 1, Blue: UGV 2, Yellow: Au-Spot 1).}}
+  \caption{Area explored in the SubT Beta Course by a team of two UGV's and one Au-Spot. Colors indicate robot-specific coverage (Red: UGV 1, Blue: UGV 2, Yellow: Au-Spot 1).}
   \label{fig:exploration_planner_topview}
 \end{figure}
 
 \begin{figure}[t!]  % Moved from odometry section; Revert if necessary
   \centering
-  \includegraphics[width=0.45\textwidth]{graphics/spot_alpha_course_stairs.PNG}
-  \caption{Map produced with the proposed method in the Alpha Course of DARPA SubT Challenge Urban Circuit.}
+  \includegraphics[width=0.35\textwidth]{graphics/spot_alpha_course_stairs.PNG}
+  \caption{Map produced with the proposed method in the SubT Alpha Course.}
   \label{fig:alpha_course_stairs_map}
 \end{figure}
 
@@ -902,8 +1039,13 @@ Finally, the proposed odometry solution was employed by team CoSTAR's Au-Spots a
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % \subsection{Planning and Autonomous Exploration}
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\ph{Coverage Planner}
-The coverage planner presented in Section \ref{sec:mission_planning} successfully enabled a fleet of two Au-Spots and \rev{two, wheeled UGV robots} to autonomously explore and map the underground environment of an abandoned power plant during the Urban Circuit of the DARPA SubT Challenge. Fig. \ref{fig:exploration_planner_topview} \rev{depicts the area explored by the robots.}
+\ph{Global Coverage and Mapping}
+The coverage planner presented in Section \ref{sec:mission_planning} successfully enabled a fleet of two Au-Spots and two, wheeled UGV robots to autonomously explore and map the underground environment of an industrial power plant during the Urban Circuit of the DARPA SubT Challenge. 
+% mapping
+Fig. \ref{fig:exploration_planner_topview} depicts the area explored by the robots during a Beta Course run. This particular collaboration of robots mapped a total of \rev{1.3km}.%HOW MANY 
+One of the most challenging elements to map in the course were the stairs due to Au-Spot's
+%Stairs present in the course are one of the most challenging course elements from the mapping perspective due  to  the  
+frequent yet necessary pitching motion, physical slippages on the stair edges, and the repetitive pattern of  the  railings. Fig.  1  shows Au-Spot successfully climbing down stairs and Fig. \ref{fig:alpha_course_stairs_map} depicts the realistic map produced during the stair climbing operations, which ensured high-precision localization ($\leq$ 5 m error) of artifacts on multiple levels of the industrial power plant.
 
 % \begin{figure}[t!]
 %   \centering
@@ -934,12 +1076,10 @@ The coverage planner presented in Section \ref{sec:mission_planning} successfull
 %\end{figure}
 
 \ph{Traversability}
-The traversability analysis module \rev{creates risk maps of size 20mx20m.}
-For this, traversability analysis is performed on the map coming from a spatial fusion of LiDAR data with odometry \cite{oleynikova2017voxblox}.
-Having a risk map this big is crucial for bridging the gap between Spot's internal planner, which only keeps a robot--centric traversability map in the size of 4x4m, and the goals that are given by the global planner, which can be up to 10 m away from the robot's current position.
-
-Besides seeing further than the internal planner, our traversability analysis, presented in Section \ref{sec:local_planning}, considers metrics such as negative obstacles, sensor blind spots, or dropped comm nodes, which are not considered by the internal planner.
-The result was that the Au-Spots were able to successfully avoid negative obstacles, such as stairs going down or avoid planning paths through the sensor blind spots.
+The traversability analysis module creates risk maps of size 20mx20m using sensory information obtained from spatial fusion of LIDAR and odometry data.
+%For this, traversability analysis is performed on the map coming from a spatial fusion of LiDAR data with odometry \cite{oleynikova2017voxblox}.
+%Having a risk map this big is crucial for bridging the gap between Spot's internal planner, which only keeps a robot--centric traversability map in the size of 4x4m, and the goals that are given by the global planner, which can be up to 10 m away from the robot's current position. %Besides long-range planning in this map, the 
+The traversability analysis presented in Section \ref{sec:local_planning} considers metrics such as negative obstacles (stairs, random voids), sensor blind spots and deployed comm nodes in order to enable Au-Spot to explore safely and to avoid planning paths which may potentially fall into Spot's in-built sensors' blind spots.  %considers metrics such as negative obstacles, sensor blind spots, or dropped comm nodes, to enable Au-Spots to avoid negative obstacles, such as stairs, random voids going down or avoid planning paths through the in-built sensors' blind spots.
 
 % \begin{figure}[thpb]
 %   \centering
@@ -972,11 +1112,11 @@ The result was that the Au-Spots were able to successfully avoid negative obstac
 %     \caption{Traversability Costmaps}
 % \end{figure}
 
-\ph{Local Planning}
-Our local planner used our bigger traversability map to plan paths to the goals given by the global planner.
-As already mentioned, this helped to overcome sub--optimal paths, due to longer planning horizon, and see obstacles, which are not visible to the internal planner.
-Additionally, the perception-aware maneuvers as described in Section \ref{sec:local_planning}, helped to bias the robot to move forward.
-Because the internal sensors have a blind spot in the rear--left and rear--right and the FoV is better in the front, this succesfully helped to avoid cases, where the robot would step into its blind spots.
+% \ph{Local Planning}
+% Our local planner uses our bigger traversability map to plan paths to the goals given by the global planner.
+% As already mentioned, this helped to overcome sub--optimal paths, due to longer planning horizon, and see obstacles, which are not visible to the internal planner.
+% Additionally, the perception-aware maneuvers as described in Section \ref{sec:local_planning}, helped to bias the robot to move forward.
+% Because the internal sensors have a blind spot in the rear--left and rear--right and the FoV is better in the front, this succesfully helped to avoid cases, where the robot would step into its blind spots.
 
 % Figure ??? shows the output of the local planner, consisting of the costmap, the A* path and the selected waypoint with the heading, which biases the robot to move forward.
 % \begin{figure}[thpb]
@@ -994,16 +1134,19 @@ Because the internal sensors have a blind spot in the rear--left and rear--right
 % \end{figure}
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\ph{Stair Climbing and Multi-level Mapping}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\rev{As previously mentioned, Au-Spot successfully climbed multiple flights of stairs during the Urban Circuit of the DARPA Subterranean Challenge.}
-%demonstrated four successful stair climbing during the Urban Circuit scored runs. 
-Each staircase consists of four flights of stairs with tight 180-degree turns at each landing. 
-The stairs are metal-grated and approximately 0.27m in run, and 0.19m in rise. Fig. \ref{fig:stairs-firstPage} shows a snapshot of \rev{Au-Spot in the Alpha course, successfully climbing down stairs.} 
-Stair climbing operations pose challenges to state estimation due to the frequent pitching motion, physical slippages on the stair edges, and repetitive patterns of the railing. 
-Fig. \ref{fig:alpha_course_stairs_map} is the map produced during the stair climbing operations, which led to high-precision localization of artifacts ($\leq$ 5 m error).
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \ph{Stair Climbing and Multi-level Mapping}
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \rev{Au-Spot successfully climbed multiple flights of stairs during the Urban Circuit of the DARPA Subterranean Challenge. The encountered staircases are among more challenging cases, where the stairs are metal-grated and approximately 0.27m in run, and 0.19m in rise. 
+% Each staircase consists of four flights of stairs with tight 180-degree turns at each landing.}
+% Fig. \ref{fig:stairs-firstPage} shows a snapshot of \rev{Au-Spot in successfully climbing down stairs.} 
+% Stair climbing operations pose challenges to state estimation due to the frequent pitching motion, physical slippages on the stair edges, and repetitive patterns of the railing. 
+% Fig. \ref{fig:alpha_course_stairs_map} is the map produced during the stair climbing operations, which led to high-precision localization of artifacts ($\leq$ 5 m error).
 
+% \ph{Stair Climbing}
+% A special case that is not handled by the local planner is stair climbing. 
+% %\rev{Stairs will either appear as positive or negative obstacles in the risk map.} 
+% In the current setting, stair climbing is semi-autonomous. The human supervisor has to \rev {\textit(i)} detect the presence of a stair case \rev{(e.g. from the robot Camera/LIDAR feed)}, \rev {\textit(ii)} switch Spot's internal planner to 'Stair' mode which configures the planner for climbing stairs, and then \rev {\textit(iii)} give \rev{a goal} at the end of the stair case. The actual climbing is then completely handled by Spot's internal planner and controller.
 
 % \begin{figure}[t]
 %   \centering
@@ -1012,12 +1155,12 @@ Fig. \ref{fig:alpha_course_stairs_map} is the map produced during the stair clim
 %   \label{fig:spot_stair_climb}
 % \end{figure}
 
-\begin{figure}[thpb]
-  \centering
-  \includegraphics[width=0.47\textwidth]{spot_iros/graphics/spot2_alpha2_ape.png}
-  \caption{\rev{Absolute Position Error (APE) of Au-Spot 2 in Alpha 2 course. TODO: To be linked with text}}
-  \label{spot2_alpha2_ape}
-\end{figure}
+% \begin{figure}[thpb]
+%   \centering
+%   \includegraphics[width=0.47\textwidth]{spot_iros/graphics/spot2_alpha2_ape.png}
+%   \caption{\rev{Absolute Position Error (APE) of Au-Spot 2 in Alpha 2 course. TODO: To be linked with text}}
+%   \label{spot2_alpha2_ape}
+% \end{figure}
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % \subsection{Spot Operation in DARPA SubT Urban Circuit}
@@ -1096,11 +1239,11 @@ Fig. \ref{fig:alpha_course_stairs_map} is the map produced during the stair clim
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Conclusions}\label{sec:conclusions}
 
-\rev{This system-focused paper reports our work on endowing the Boston Dynamics Spot robot with high-levels of autonomy, hardware and perception capabilities that won the Urban Circuit of the DARPA Subterranean Challenge.}
+This system-focused paper reports our effort on endowing the Boston Dynamics Spot robot with high-levels of autonomy, hardware and perception capabilities that won the Urban Circuit of the DARPA Subterranean Challenge.
 %This system-focused paper reports our work on endowing high-level autonomy and perception capabilities on the Boston Dynamics Spot robot that won the Urban Circuit of the DARPA Subterranean (SubT) Challenge. 
-In this paper, \rev{we briefly discussed our NeBula autonomy architecture which we augmented to Boston Dynamics' Spot and described specific aspects to enabling legged autonomy in complex missions.}  
+In this paper, we discussed our NeBula autonomy architecture which we augmented to Boston Dynamics' Spot and described specific aspects in enabling legged autonomy for complex missions.  
 % and explained in more detail the odometry and risk-aware planning aspects of the autonomy framework. 
-We believe this work is an important step in demonstrating the capabilities of legged robots to accomplish complex real-world missions in extreme environments.
+We believe this work is an important step in demonstrating the capabilities of legged robots for accomplishing complex, real-world live-missions in extreme environments.
 
 %Motivated by exploring extreme environments and in particular underground environments in DARPA SubTerranean Challenge, this paper pushes the boundaries of the state-of-practice in enabling legged robotic systems to accomplish real-world complex missions in relevant scenarios. In particular, we will discuss the behaviors and capabilities which emerge from the integration of the autonomy framework NeBula (Networked Belief-aware Perceptual Autonomy) with next generation mobility systems. We will discuss the design, hardware, software challenges and solutions in mobility, perception, autonomy, and wireless networking, as well as lessons learned and future directions. We demonstrate the performance of the proposed system and solutions on physical systems in real-world scenarios, which achieved first place in the 2020 DARPA Subterranean Challenge Urban Circuit.
 
@@ -1199,4 +1342,3 @@ We believe this work is an important step in demonstrating the capabilities of l
 % motion-prior OR prior INSTEAD of external - Just calling it Y - OK + OR T_init
 
 %---------------------------------------------------------
-\comment{SUMMARY: We denote with $L_{k}$ the LiDAR scan collected at time $k$ and with $L_{k-1}$ the LiDAR scan collected at time $k-1$. We indicate with $\textbf{E}^{k-1}_{k} = \textbf{Y}^{-1}_{k-1}\textbf{Y}_k\in SE(3)$ the rigid body transformation of HeRO's output between two consecutive LiDAR acquisitions where, in order to address asynchronous odometry measurements, we interpolate the buffered $\textbf{Y}$ at LiDAR timestamps to $t_{k-1}$, and $t_k$ to get $\textbf{Y}_{k-1}$ and $\textbf{Y}_{k}$: the pose of the HeRO's output at times $t_{k-1}$ and $t_k$, respectively.}
